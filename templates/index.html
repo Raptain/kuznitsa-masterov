@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кузница мастеров - Генератор подземелий</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Georgia', serif;
+            background: linear-gradient(135deg, #3d001e 0%, #5b0b2b 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #fadbc8 0%, #f3c4a6 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            border: 1px solid #d47c6e;
+        }
+        
+        /* Заголовок в стиле "Кузница мастеров" */
+        .forge-header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .forge-header h1 {
+            font-size: 3.5em;
+            color: #5b0b2b;
+            text-shadow: 3px 3px 0px #fadbc8, 6px 6px 0px #a63d57;
+            letter-spacing: 3px;
+            font-family: 'Georgia', serif;
+        }
+        
+        .forge-header .subtitle {
+            color: #8e2c46;
+            font-size: 1.2em;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .forge-header::before,
+        .forge-header::after {
+            content: "⚒️";
+            font-size: 2em;
+            position: absolute;
+            top: 20px;
+        }
+        
+        .forge-header::before {
+            left: 20px;
+        }
+        
+        .forge-header::after {
+            right: 20px;
+            content: "⚙️";
+        }
+        
+        /* Форма */
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #5b0b2b;
+            font-size: 1.1em;
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #a63d57;
+            border-radius: 10px;
+            font-size: 16px;
+            background: #fadbc8;
+            color: #3d001e;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #d47c6e;
+            box-shadow: 0 0 10px rgba(164, 61, 87, 0.3);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #5b0b2b 0%, #8e2c46 100%);
+            color: #fadbc8;
+            border: none;
+            padding: 14px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            font-family: 'Georgia', serif;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(91, 11, 43, 0.4);
+            background: linear-gradient(135deg, #8e2c46 0%, #b1475e 100%);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #8e2c46;
+        }
+        
+        .spinner {
+            border: 4px solid #fadbc8;
+            border-top: 4px solid #a63d57;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        #result {
+            margin-top: 30px;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Статистика */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #5b0b2b 0%, #8e2c46 100%);
+            color: #fadbc8;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border: 1px solid #d47c6e;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            display: block;
+            color: #f3c4a6;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        /* Вкладки */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #a63d57;
+        }
+        
+        .tab {
+            padding: 12px 25px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #5b0b2b;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .tab.active {
+            background: #a63d57;
+            color: #fadbc8;
+        }
+        
+        .tab:hover:not(.active) {
+            background: #f3c4a6;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+/* Карта - с легендами по бокам */
+.map-container {
+    text-align: center;
+    margin: 20px 0;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow-x: auto;
+    border: 1px solid #ccc;
+}
+
+#mapImage {
+    max-width: 100%;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background: white;
+}        
+        
+        /* Таблица */
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 10px;
+            border: 1px solid #a63d57;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #d47c6e;
+        }
+        
+        th {
+            background: #5b0b2b;
+            color: #fadbc8;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tr:hover {
+            background: #f3c4a6;
+        }
+        
+        /* Бейджи для типов комнат */
+        .room-type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .badge-entrance { background: #fadbc8; color: #5b0b2b; }
+        .badge-boss { background: #5b0b2b; color: #fadbc8; }
+        .badge-battle { background: #a63d57; color: #fadbc8; }
+        .badge-treasure { background: #d47c6e; color: #3d001e; }
+        .badge-trap { background: #8e2c46; color: #fadbc8; }
+        .badge-puzzle { background: #e8a790; color: #3d001e; }
+        .badge-rest { background: #f3c4a6; color: #5b0b2b; }
+        .badge-gateway { background: #b1475e; color: #fadbc8; }
+        .badge-shop { background: #6b1237; color: #fadbc8; }
+        
+        /* Панель связей */
+        .connections-panel {
+            background: #fadbc8;
+            border-left: 4px solid #a63d57;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        
+        .connections-panel h3 {
+            color: #5b0b2b;
+            margin-bottom: 15px;
+        }
+        
+        .connections-panel ul {
+            list-style: none;
+            padding-left: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 10px;
+        }
+        
+        .connections-panel li {
+            padding: 10px;
+            border-radius: 8px;
+            background: white;
+            border-bottom: 1px solid #d47c6e;
+            font-size: 14px;
+        }
+        
+        .connection-normal {
+            border-left: 4px solid #a63d57;
+        }
+        
+        .connection-secret {
+            border-left: 4px solid #d47c6e;
+            background: #f3c4a6;
+        }
+        
+        .connection-oneway {
+            border-left: 4px solid #5b0b2b;
+        }
+        
+        .connection-magic {
+            border-left: 4px solid #e8a790;
+        }
+        
+        /* Кнопка скачивания */
+        .download-btn {
+            background: linear-gradient(135deg, #b1475e 0%, #5b0b2b 100%);
+            margin-top: 20px;
+        }
+        
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .forge-header h1 {
+                font-size: 2em;
+            }
+            
+            .forge-header::before,
+            .forge-header::after {
+                display: none;
+            }
+            
+            th, td {
+                padding: 8px;
+                font-size: 12px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .stat-card {
+                padding: 15px;
+            }
+            
+            .stat-value {
+                font-size: 24px;
+            }
+            
+            .tab {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+            
+            .connections-panel ul {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Дополнительные стили для скролла */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #fadbc8;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #a63d57;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5b0b2b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="forge-header">
+            <h1>🏭 КУЗНИЦА МАСТЕРОВ</h1>
+            <div class="subtitle">Генератор подземелий с магическими связями</div>
+        </div>
+        
+        <form id="dungeonForm">
+            <div class="form-group">
+                <label for="size">📏 Размер подземелья:</label>
+                <select id="size" name="size">
+                    <option value="small">Маленькое (5-7 комнат)</option>
+                    <option value="medium" selected>Среднее (8-12 комнат)</option>
+                    <option value="large">Большое (15-20 комнат)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="dungeon_type">🏔️ Тип подземелья:</label>
+                <select id="dungeon_type" name="dungeon_type">
+                    <option value="standard">Стандартное</option>
+                    <option value="caverns">Пещеры</option>
+                    <option value="ruins">Руины</option>
+                </select>
+            </div>
+            
+            <button type="submit">⚒️ СОЗДАТЬ ПОДЗЕМЕЛЬЕ ⚔️</button>
+        </form>
+        
+        <div id="loading" style="display:none;">
+            <div class="spinner"></div>
+            <p>Кузница куёт новое подземелье...</p>
+        </div>
+        
+        <div id="result" style="display:none;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-value" id="totalRooms">0</span>
+                    <span class="stat-label">Всего комнат</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="totalConnections">0</span>
+                    <span class="stat-label">Всего связей</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="avgDifficulty">0</span>
+                    <span class="stat-label">Средняя сложность</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="secretPaths">0</span>
+                    <span class="stat-label">Секретные пути</span>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab active" data-tab="map">🗺️ КАРТА</button>
+                <button class="tab" data-tab="rooms">📋 КОМНАТЫ</button>
+                <button class="tab" data-tab="connections">🔗 СВЯЗИ</button>
+            </div>
+            
+            <div class="tab-content active" id="tab-map">
+                <div class="map-container">
+                    <img id="mapImage" src="" alt="Карта подземелья">
+                </div>
+            </div>
+            
+            <div class="tab-content" id="tab-rooms">
+                <div class="table-container">
+                    <table id="roomsTable">
+                        <thead>
+                            <tr>
+                                <th>№</th>
+                                <th>Тип</th>
+                                <th>Размер</th>
+                                <th>Сложность</th>
+                                <th>Выходов</th>
+                                <th>Описание</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="tab-connections">
+                <div class="connections-panel" id="connectionsInfo">
+                    <h3>🔗 Схема связей между комнатами</h3>
+                    <p style="color: #8e2c46; text-align: center;">Загрузка связей...</p>
+                </div>
+            </div>
+            
+            <button id="downloadBtn" class="download-btn">📜 Скачать свиток с отчётом (DOCX)</button>
+        </div>
+    </div>
+    
+    <script>
+        let currentSessionId = null;
+        
+        // Переключение вкладок
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`tab-${tabName}`).classList.add('active');
+            });
+        });
+        
+        // Отправка формы
+        document.getElementById('dungeonForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentSessionId = data.session_id;
+                    // Добавляем timestamp чтобы избежать кэширования
+                    document.getElementById('mapImage').src = data.map_url + '?t=' + Date.now();
+                    
+                    // Обновляем статистику
+                    document.getElementById('totalRooms').textContent = data.rooms.length;
+                    document.getElementById('totalConnections').textContent = data.connections?.length || 0;
+                    
+                    const avgDiff = data.rooms.reduce((sum, r) => sum + r.difficulty, 0) / data.rooms.length;
+                    document.getElementById('avgDifficulty').textContent = avgDiff.toFixed(1);
+                    
+                    const secretCount = data.connections?.filter(c => c.type === 'secret').length || 0;
+                    document.getElementById('secretPaths').textContent = secretCount;
+                    
+                    // Заполняем таблицу комнат
+                    const tbody = document.querySelector('#roomsTable tbody');
+                    tbody.innerHTML = '';
+                    
+                    const typeNames = {
+                        'entrance': 'Вход', 'boss': 'Босс', 'battle': 'Битва',
+                        'treasure': 'Клад', 'trap': 'Ловушка', 'puzzle': 'Загадка',
+                        'rest': 'Отдых', 'gateway': 'Портал', 'shop': 'Кузня'
+                    };
+                    
+                    data.rooms.forEach(room => {
+                        const row = tbody.insertRow();
+                        row.insertCell(0).textContent = room.id;
+                        
+                        const typeName = typeNames[room.type] || room.type;
+                        const typeBadge = `<span class="room-type-badge badge-${room.type}">${typeName}</span>`;
+                        row.insertCell(1).innerHTML = typeBadge;
+                        
+                        row.insertCell(2).textContent = room.size;
+                        row.insertCell(3).textContent = room.difficulty;
+                        row.insertCell(4).textContent = room.num_exits || 1;
+                        row.insertCell(5).textContent = room.description;
+                    });
+                    
+                    // Отображаем связи
+                    if (data.connections && data.connections.length > 0) {
+                        displayConnections(data.connections);
+                    } else {
+                        document.getElementById('connectionsInfo').innerHTML = `
+                            <h3>🔗 Схема связей между комнатами</h3>
+                            <p style="color: #8e2c46; text-align: center;">Связи не найдены (линейное подземелье)</p>
+                        `;
+                    }
+                    
+                    document.getElementById('result').style.display = 'block';
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            } catch (error) {
+                alert('Ошибка при генерации: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+        
+        // Функция отображения связей
+        function displayConnections(connections) {
+            const connDiv = document.getElementById('connectionsInfo');
+            
+            let html = '<h3>🔗 Схема связей между комнатами</h3>';
+            html += '<ul>';
+            
+            connections.forEach(conn => {
+                let icon = '';
+                let typeClass = 'connection-normal';
+                let typeName = 'Обычный путь';
+                
+                if (conn.type === 'secret') {
+                    icon = '🔒 ';
+                    typeClass = 'connection-secret';
+                    typeName = 'Секретный проход';
+                } else if (conn.type === 'oneway') {
+                    icon = '➡️ ';
+                    typeClass = 'connection-oneway';
+                    typeName = 'Односторонний';
+                } else if (conn.type === 'magic') {
+                    icon = '🔮 ';
+                    typeClass = 'connection-magic';
+                    typeName = 'Магический портал';
+                } else {
+                    icon = '🔗 ';
+                    typeName = 'Обычный путь';
+                }
+                
+                let description = '';
+                if (conn.type === 'secret') {
+                    description = ' - Скрытый проход, требует особого навыка';
+                } else if (conn.type === 'oneway') {
+                    description = ' - Нельзя вернуться обратно';
+                } else if (conn.type === 'magic') {
+                    description = ' - Телепортирует через магический портал';
+                }
+                
+                html += `<li class="${typeClass}">
+                            ${icon} 
+                            <strong>Комната ${conn.from}</strong> → <strong>Комната ${conn.to}</strong>
+                            <span style="color: #8e2c46;"> (${typeName})</span>
+                            ${conn.label ? `<br><span style="color: #a63d57; font-size: 11px;">📝 ${conn.label}</span>` : ''}
+                            <span style="color: #a63d57; font-size: 12px;">${description}</span>
+                         </li>`;
+            });
+            
+            html += '</ul>';
+            
+            const normalCount = connections.filter(c => c.type === 'normal').length;
+            const secretCount = connections.filter(c => c.type === 'secret').length;
+            const onewayCount = connections.filter(c => c.type === 'oneway').length;
+            const magicCount = connections.filter(c => c.type === 'magic').length;
+            
+            html += `<div style="margin-top: 20px; padding: 15px; background: #f3c4a6; border-radius: 10px; border-left: 4px solid #a63d57;">
+                        <strong style="color: #5b0b2b;">📊 Статистика связей:</strong><br>
+                        🔗 Обычных: ${normalCount} | 
+                        🔒 Секретных: ${secretCount} | 
+                        ➡️ Односторонних: ${onewayCount} |
+                        🔮 Магических: ${magicCount}
+                     </div>`;
+            
+            connDiv.innerHTML = html;
+        }
+        
+        // Скачивание отчёта
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (currentSessionId) {
+                window.location.href = `/download/${currentSessionId}`;
+            }
+        });
+    </script>
+</body>
+</html>

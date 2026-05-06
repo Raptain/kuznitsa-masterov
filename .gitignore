@@ -1,0 +1,35 @@
+# Виртуальное окружение
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Файлы IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Сгенерированные файлы
+static/maps/*.png
+static/docs/*.docx
+!static/maps/.gitkeep
+!static/docs/.gitkeep
+
+# Логи
+*.log
+*.tmp
+
+# Docker (если остался)
+Dockerfile
+docker-compose.yml
+.dockerignore
+*.bat
+*.sh
+
+# Тесты
+test_*.py
+
+# Системные файлы
+.DS_Store
+Thumbs.db
