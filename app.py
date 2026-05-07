@@ -179,7 +179,7 @@ class DungeonGenerator:
 excel_reader = ExcelReader()
 dungeon_gen = DungeonGenerator(excel_reader)
 
-# Импортируем MapGenerator из отдельного файла (он у нас уже есть)
+# Импортируем MapGenerator из отдельного файла
 from map_generator import MapGenerator
 map_gen = MapGenerator()
 generated_data = {}
@@ -248,46 +248,21 @@ def download(session_id):
         return "Файл не найден", 404
     
     try:
-        from docx import Document
-        from docx.shared import Inches
-        
-        doc = Document()
-        doc.add_heading('Отчёт о подземелье', 0)
-        
-        if os.path.exists(data['map_path']):
-            doc.add_picture(data['map_path'], width=Inches(6))
-        
-        doc.add_heading('Список комнат', level=1)
-        table = doc.add_table(rows=1, cols=5)
-        table.style = 'Table Grid'
-        hdr = table.rows[0].cells
-        hdr[0].text = '№'
-        hdr[1].text = 'Тип'
-        hdr[2].text = 'Размер'
-        hdr[3].text = 'Сложность'
-        hdr[4].text = 'Описание'
-        
-        for room in data['rooms']:
-            row = table.add_row().cells
-            row[0].text = str(room['id'])
-            row[1].text = room['type']
-            row[2].text = room['size']
-            row[3].text = str(room['difficulty'])
-            row[4].text = room['description']
-        
-        doc_path = f'static/docs/report_{session_id}.docx'
-        os.makedirs('static/docs', exist_ok=True)
-        doc.save(doc_path)
-        
+        from doc_generator import DocGenerator
+        doc_gen = DocGenerator()
+        doc_path = doc_gen.generate_doc(
+            data['rooms'], 
+            data['connections'], 
+            data['map_path'], 
+            f'report_{session_id}.docx'
+        )
         return send_file(doc_path, as_attachment=True, download_name='dungeon_report.docx')
     except Exception as e:
+        print(f"❌ Ошибка создания отчёта: {e}")
+        import traceback
+        traceback.print_exc()
         return f"Ошибка создания отчёта: {e}", 500
 
 if __name__ == '__main__':
-    print("🚀 Запуск сервера...")
-    print("📁 Папка data:", os.path.exists('data'))
-    if os.path.exists('data/dungeon_data.xlsx'):
-        print("✅ Excel-файл найден в папке data/")
-    else:
-        print("❌ Excel-файл НЕ найден в папке data/")
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
