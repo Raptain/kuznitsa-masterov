@@ -9,6 +9,10 @@ class MapGenerator:
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
         
+        # Путь к папке со шрифтами
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.fonts_dir = os.path.join(base_dir, 'fonts')
+        
         # Типы комнат для легенды (с символами)
         self.room_types = {
             'entrance': {'name': 'Вход', 'symbol': '1'},
@@ -21,6 +25,25 @@ class MapGenerator:
             'gateway': {'name': 'Портал', 'symbol': '8'},
             'shop': {'name': 'Торговец', 'symbol': '9'}
         }
+    
+    def get_font(self, size):
+        """Загружает шрифт из папки fonts или использует стандартный"""
+        font_paths = [
+            os.path.join(self.fonts_dir, 'arial.ttf'),
+            os.path.join(self.fonts_dir, 'Roboto-Regular.ttf'),
+            os.path.join(self.fonts_dir, 'DejaVuSans.ttf')
+        ]
+        
+        for font_path in font_paths:
+            if os.path.exists(font_path):
+                try:
+                    return ImageFont.truetype(font_path, size)
+                except:
+                    continue
+        
+        # Если шрифт не найден, используем стандартный
+        print(f"⚠️ Шрифт не найден, использую стандартный. Размер: {size}")
+        return ImageFont.load_default()
     
     def draw_room(self, draw, x, y, size, room, font, font_small):
         """Рисует квадратную комнату только с номером"""
@@ -38,7 +61,6 @@ class MapGenerator:
         x2, y2 = to_room['x'], to_room['y']
         
         conn_type = connection.get('type', 'normal')
-        label = connection.get('label', '')
         
         room_size = 45
         offset = room_size + 5
@@ -210,14 +232,10 @@ class MapGenerator:
         img = Image.new('RGB', (int(total_width), int(map_height)), 'white')
         draw = ImageDraw.Draw(img)
         
-        try:
-            font = ImageFont.truetype("arial.ttf", 16)
-            font_small = ImageFont.truetype("arial.ttf", 12)
-            font_legend = ImageFont.truetype("arial.ttf", 11)
-        except:
-            font = ImageFont.load_default()
-            font_small = font
-            font_legend = font
+        # Загружаем шрифты из папки fonts
+        font = self.get_font(16)
+        font_small = self.get_font(12)
+        font_legend = self.get_font(11)
         
         # Смещение для карты (чтобы легенды были по бокам)
         map_offset_x = legend_width + 20
@@ -348,7 +366,6 @@ class MapGenerator:
             table_y = legend_left_y + 310
             
             table_height = 30 + len(tunnel_letters) * 20
-            # Ограничиваем высоту таблицы
             if table_height > 250:
                 table_height = 250
             
@@ -359,7 +376,7 @@ class MapGenerator:
             draw.text((table_x + 10, table_y + 8), "ПЕРЕХОДЫ:", fill='black', font=font_small)
             
             y_offset = 28
-            for conn, letter in list(tunnel_letters.items())[:12]:  # Показываем не более 12
+            for conn, letter in list(tunnel_letters.items())[:12]:
                 parts = conn.split('-')
                 draw.text((table_x + 10, table_y + y_offset), 
                          f"{letter}:  {parts[0]} → {parts[1]}", 
